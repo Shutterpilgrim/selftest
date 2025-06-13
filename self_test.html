@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retro Candidate Fit Panel</title>
+  <style>
+    @font-face {
+      font-family: 'PixelLCD';
+      src: url('https://fonts.cdnfonts.com/s/15275/PixelLCD7.woff') format('woff');
+    }
+    body {
+      background: linear-gradient(145deg, #d8e4cf, #acc9b1);
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .panel {
+      background: #f5f2e8;
+      width: 460px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    .lcd-container {
+      background: #405e40;
+      padding: 20px;
+      text-align: center;
+    }
+    .glass-display {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(2px);
+      color: #fff;
+      font-weight: bold;
+      padding: 6px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+    .lcd-bar {
+      height: 120px;
+      background: #2b3529;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 6px;
+    }
+    .bar {
+      width: 4px;
+      background: #a8ddb5;
+      height: 10%;
+      transition: height 0.15s ease;
+    }
+    .feedback-display {
+      background: #2b3529;
+      height: 52px;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 6px;
+      position: relative;
+      color: #d8f5db;
+      font-weight: bold;
+      font-family: 'PixelLCD', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      text-align: center;
+    }
+    .controls {
+      background: #fdfaf2;
+      padding: 24px;
+    }
+    .control-group {
+      margin-bottom: 24px;
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .slider-value {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 8px;
+      background: #a3b79c;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #eef1dc;
+      border-radius: 50%;
+      border: 2px solid #333;
+      cursor: pointer;
+    }
+    .retro-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      margin: 12px 0;
+    }
+    .retro-switch {
+      width: 50px;
+      height: 24px;
+      border-radius: 12px;
+      background: #c8c8c8;
+      position: relative;
+      cursor: pointer;
+    }
+    .retro-switch::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #b4ecb4;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+    .retro-switch.active {
+      background: #3b753b;
+    }
+    .retro-switch.active::before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="lcd-container">
+      <div class="glass-display" id="fitLabel">Great to see you here at emPath Lab</div>
+      <div class="lcd-bar" id="lcdBar"></div>
+      <div class="feedback-display" id="fitFeedback">Great to see you here at emPath Lab</div>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label for="experience">Total Experience (years)</label>
+        <input type="range" min="1" max="5" step="1" id="experience" />
+        <div class="slider-value" id="experienceValue">3 years</div>
+      </div>
+      <div class="control-group">
+        <label for="saas">SaaS Experience Level</label>
+        <input type="range" min="1" max="5" step="1" id="saas" />
+        <div class="slider-value" id="saasValue">Moderate</div>
+      </div>
+      <div class="retro-toggle">
+        <label>Worked with VC-backed startups?</label>
+        <div class="retro-switch" id="vcSwitch"></div>
+      </div>
+      <div class="retro-toggle">
+        <label>Worked with remote teams?</label>
+        <div class="retro-switch" id="remoteSwitch"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const lcdBar = document.getElementById("lcdBar");
+    const fitLabel = document.getElementById("fitLabel");
+    const fitFeedback = document.getElementById("fitFeedback");
+    const experienceInput = document.getElementById("experience");
+    const saasInput = document.getElementById("saas");
+    const experienceValue = document.getElementById("experienceValue");
+    const saasValue = document.getElementById("saasValue");
+    const vcSwitch = document.getElementById("vcSwitch");
+    const remoteSwitch = document.getElementById("remoteSwitch");
+
+    let vc = false, remote = false;
+
+    vcSwitch.addEventListener("click", () => toggle(vcSwitch, 'vc'));
+    remoteSwitch.addEventListener("click", () => toggle(remoteSwitch, 'remote'));
+
+    experienceInput.addEventListener("input", updateUI);
+    saasInput.addEventListener("input", updateUI);
+
+    function toggle(el, type) {
+      el.classList.toggle("active");
+      if (type === 'vc') vc = !vc;
+      if (type === 'remote') remote = !remote;
+      updateUI();
+    }
+
+    function updateUI() {
+      const exp = parseInt(experienceInput.value);
+      const saas = parseInt(saasInput.value);
+      experienceValue.textContent = `${exp} year${exp > 1 ? 's' : ''}`;
+      saasValue.textContent = ["Very Limited", "Limited", "Moderate", "Good", "Extensive"][saas - 1];
+
+      let label = "Exploring Fit";
+      let message = "If you're exploring roles, we're happy to connect — more opportunities are just around the corner.";
+
+      if (exp >= 3 && exp <= 4 && saas >= 3 && saas <= 5 && vc) {
+        label = "Great Match!";
+        message = "You should definitely have a conversation with us — we're excited to meet you!";
+      } else if (exp >= 3 && saas >= 3) {
+        label = "Promising Fit";
+        message = "We'd love to connect and hear your story — this could be the start of something!";
+      }
+
+      fitLabel.textContent = label;
+      fitFeedback.textContent = message;
+
+      renderBars(label);
+    }
+
+    function renderBars(type) {
+      lcdBar.innerHTML = "";
+      const count = 48;
+      for (let i = 0; i < count; i++) {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        lcdBar.appendChild(bar);
+      }
+      const bars = lcdBar.children;
+      clearInterval(window.barAnimation);
+      window.barAnimation = setInterval(() => {
+        for (let i = 0; i < bars.length; i++) {
+          let height = 5;
+          if (type === "Great Match!") {
+            height = Math.floor(Math.random() * 72 + 8);
+          } else if (type === "Promising Fit") {
+            height = Math.floor(Math.random() * 48 + 24);
+          } else {
+            height = Math.random() > 0.97 ? 40 : 5;
+          }
+          bars[i].style.height = height + "%";
+        }
+      }, 200);
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
